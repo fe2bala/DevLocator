@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const pointSchema = require('./utils/PointSchema')
+const pointSchema = require('./utils/PointSchema');
 
 const DevSchema = new mongoose.Schema({
     name: String,
