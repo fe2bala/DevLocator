@@ -6,8 +6,12 @@ const { parseArrayAsString, logger, errorHandling } = require('../utils');
 
 module.exports = {
     async index(rep,res){
-        const devs = await Dev.find();
-        return res.json(devs);
+        try{
+            const devs = await Dev.find();
+            return res.json(devs);
+        }catch(err){
+            return errorHandling(res,err);
+        }
     },
     async store(req,res) {
         try{
@@ -40,28 +44,38 @@ module.exports = {
          
     },
     async update(req,res){
-        const { id } = req.params;
-        const {github_username, techs,latitude, longitude} = req.body;
-        const response = await axios.get(`https://api.github.com/users/${github_username}`);
-        const {name = login, avatar_url, bio } = response.data;
-        const techsArray = parseArrayAsString(techs);
-        const location = {
-            type: 'Point',
-            coordinates:[longitude,latitude]
-        }
-
-        const dev = Dev.findByIdAndUpdate(id,{techs: techsArray,location,avatar_url,bio},(err,result)=>{
-            if (err){
-                return err;
+        try{
+            const { id } = req.params;
+            const {github_username, techs,latitude, longitude} = req.body;
+            const response = await axios.get(`https://api.github.com/users/${github_username}`);
+            const {name = login, avatar_url, bio } = response.data;
+            const techsArray = parseArrayAsString(techs);
+            const location = {
+                type: 'Point',
+                coordinates:[longitude,latitude]
             }
-            return result;
-        });
-        return res.json({message: `success`, data: dev});
+    
+            const dev = Dev.findByIdAndUpdate(id,{techs: techsArray,location,avatar_url,bio},(err,result)=>{
+                if (err){
+                    return err;
+                }
+                return result;
+            });
+            return res.json({message: `success`, data: dev});
+        }catch(err){
+            return errorHandling(res,err);
+        }
+        
     },
     async destroy(req,res){
-        const { id } = req.params;
-        logger.info(`Deleting dev id: ${id}`)
-        const dev = Dev.findByIdAndDelete(id).then((doc)=>doc);
-        return res.json({dev});
+        try{
+            const { id } = req.params;
+            logger.info(`Deleting dev id: ${id}`)
+            const dev = Dev.findByIdAndDelete(id).then((doc)=>doc);
+            return res.status(200).json({dev});
+        }catch(err){
+            return errorHandling(res,err)
+        }
+        
     },
 }
