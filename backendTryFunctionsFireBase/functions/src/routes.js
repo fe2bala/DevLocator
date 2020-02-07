@@ -1,20 +1,27 @@
 const { Router } = require('express');
-const DevController = require('./controllers/DevController');
-const SearchController = require('./controllers/SearchController');
+
+const { HomeController, DevController, SearchController } = require('./controllers');
+
+const { httpLogger } = require('./middlewares');
 
 
 const routes = Router();
+//Middlewares
+routes.use(httpLogger);
+
+//Routes
+
+//Devs
 routes.get('/devs', DevController.index);
 routes.put('/devs/:id', DevController.update);
-
 routes.post('/devs', DevController.store);
 routes.delete('/devs/:id', DevController.destroy);
 
+//Search
 routes.get('/search', SearchController.index);
 
-routes.get('/',(rep,res)=>{
-    return res.json({message:'Hello'})
-});
+//Home
+routes.get('*',HomeController.index);
 
 module.exports = routes;
 

@@ -1,39 +1,43 @@
 
 const axios = require('axios');
 const Dev = require('../models/Dev');
-const parseArrayAsString = require('../utils/parseStringAsArray')
+const { parseArrayAsString, logger, errorHandling } = require('../utils');
 
 
 module.exports = {
     async index(rep,res){
-        console.log(`get devs`)
         const devs = await Dev.find();
         return res.json(devs);
     },
     async store(req,res) {
-        const {github_username, techs,latitude, longitude} = req.body;
-        let devDB = await Dev.findOne({github_username});
-        if(!devDB){
-            const response = await axios.get(`https://api.github.com/users/${github_username}`);
-            const {name = login, avatar_url, bio } = response.data;
-            
-            console.log(`storing... dev name: ${name} `);
-            const techsArray = parseArrayAsString(techs);
-            const location = {
-                type: 'Point',
-                coordinates:[longitude,latitude]
-            }
-            const dev = await Dev.create({
-                github_username,
-                name,
-                avatar_url,
-                bio,
-                techs: techsArray,
-                location
-            });    
-            return res.status(201).json({message: `success`, data: dev});
-        } 
-        return res.status(403).json({message:`dev already exists`}) 
+        try{
+            const {github_username, techs,latitude, longitude} = req.body;
+            let devDB = await Dev.findOne({github_username});
+            if(!devDB){
+                const response = await axios.get(`https://api.github.com/users/${github_username}`);
+                const {name = login, avatar_url, bio } = response.data;
+                
+                logger.info(`storing... dev name: ${name} `);
+                const techsArray = parseArrayAsString(techs);
+                const location = {
+                    type: 'Point',
+                    coordinates:[longitude,latitude]
+                }
+                const dev = await Dev.create({
+                    github_username,
+                    name,
+                    avatar_url,
+                    bio,
+                    techs: techsArray,
+                    location
+                });    
+                return res.status(201).json({message: `success`, data: dev});
+            } 
+            return res.status(403).json({message:`dev already exists`});
+        }catch(err){
+            return errorHandling(res,err);
+        }
+         
     },
     async update(req,res){
         const { id } = req.params;
@@ -56,7 +60,7 @@ module.exports = {
     },
     async destroy(req,res){
         const { id } = req.params;
-        console.log(`Deleting dev id: ${id}`)
+        logger.info(`Deleting dev id: ${id}`)
         const dev = Dev.findByIdAndDelete(id).then((doc)=>doc);
         return res.json({dev});
     },
